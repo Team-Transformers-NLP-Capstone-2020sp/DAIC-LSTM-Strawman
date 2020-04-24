@@ -1,65 +1,40 @@
+
 from __future__ import print_function
 
 from keras.models import Model
 from keras.layers import Input, LSTM, Dense
-import csv
 import numpy as np
+import pdb
 
 batch_size = 64  # Batch size for training.
-epochs = 1  # Number of epochs to train for.
+epochs = 100  # Number of epochs to train for.
 latent_dim = 256  # Latent dimensionality of the encoding space.
 num_samples = 10000  # Number of samples to train on.
 # Path to the data txt file on disk.
-data_path = 'fra-eng/fra.txt'
+data_path = 'test.txt'
 
 # Vectorize the data.
 input_texts = []
 target_texts = []
 input_characters = set()
 target_characters = set()
-
-for i in range(300,385):
-    try:
-        with open('DAIC/' + str(i) + '_TRANSCRIPT.csv') as csvfile:
-            prev_speaker = "NoOne"
-            value = ""
-            conversation = csv.reader(csvfile, delimiter='\t')
-            next(conversation)
-            for row in conversation:
-                if row:
-                    line_value = ' ' + row[3]
-                    cur_speaker = row[2]
-                    if cur_speaker == prev_speaker or prev_speaker == "NoOne":
-                        value += line_value
-                    else: # new speaker
-                        # we add this in
-                        value = '\t' + value + '\n'
-                        if prev_speaker == "Ellie":
-                            input_texts.append(value)
-                            for char in value:
-                                if char not in input_characters:
-                                    input_characters.add(char)
-                        elif prev_speaker == "Participant":
-                            target_texts.append(value)
-                            for char in value:
-                                if char not in target_characters:
-                                    target_characters.add(char)
-                        # set the value to the new thing
-                        value = line_value
-                    prev_speaker = cur_speaker
-            value = '\t' + value + '\n'
-            if prev_speaker == "Ellie":
-                input_texts.append(value)
-                for char in value:
-                    if char not in input_characters:
-                        input_characters.add(char)
-            elif prev_speaker == "Participant":
-                target_texts.append(value)
-                for char in value:
-                    if char not in target_characters:
-                        target_characters.add(char)
-    except:
-        pass
+with open(data_path, 'r', encoding='utf-8') as f:
+    lines = f.read().split('\n')
+for line in lines[: min(num_samples, len(lines) - 1)]:
+    #input_text, target_text, _ = line.split('\t')
+    input_text, target_text = line.split('\t')
+    # We use "tab" as the "start sequence" character
+    # for the targets, and "\n" as "end sequence" character.
+    target_text = '\t' + target_text + '\n'
+    input_texts.append(input_text)
+    target_texts.append(target_text)
+    for char in input_text:
+        if char not in input_characters:
+            input_characters.add(char)
+    for char in target_text:
+        if char not in target_characters:
+            target_characters.add(char)
+#pdb.set_trace()
 
 input_characters = sorted(list(input_characters))
 target_characters = sorted(list(target_characters))
