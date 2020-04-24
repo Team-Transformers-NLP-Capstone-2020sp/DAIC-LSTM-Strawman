@@ -7,9 +7,9 @@ import numpy as np
 import pdb
 
 batch_size = 64  # Batch size for training.
-epochs = 100  # Number of epochs to train for.
+epochs = 500  # Number of epochs to train for.
 latent_dim = 256  # Latent dimensionality of the encoding space.
-num_samples = 10000  # Number of samples to train on.
+num_samples = 200  # Number of samples to train on.
 # Path to the data txt file on disk.
 data_path = 'test.txt'
 
@@ -21,8 +21,7 @@ target_characters = set()
 with open(data_path, 'r', encoding='utf-8') as f:
     lines = f.read().split('\n')
 for line in lines[: min(num_samples, len(lines) - 1)]:
-    #input_text, target_text, _ = line.split('\t')
-    input_text, target_text = line.split('\t')
+    input_text, target_text, _ = line.split('\t')
     # We use "tab" as the "start sequence" character
     # for the targets, and "\n" as "end sequence" character.
     target_text = '\t' + target_text + '\n'

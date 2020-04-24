@@ -1,35 +1,37 @@
-import csv
+import pandas as pd, numpy as np
+import re, os
 
-data_set = open("test.txt", "w")
+def parse_conversation(df):
+    drop_rows = []
+    for i in range(1, len(df)):
+        # check for consecutive rows with same speaker
+        if df.loc[i, "speaker"] == df.loc[i - 1, "speaker"]:
+            df.loc[i, "value"] = str(df.loc[i - 1, "value"]) + " " + str(df.loc[i, "value"])
+            drop_rows.append(i - 1)
+    df = df.drop(drop_rows)
+    #df = df[df.speaker == 'Participant']["value"].apply(lambda x: re.sub("<.*>", "", x))
+    df = df[df != ""]
+    return df
 
+convs = []
 for i in range(300,305):
     try:
-        with open('DAIC/' + str(i) + '_TRANSCRIPT.csv') as csvfile:
-            prev_speaker = ""
-            value = ""
-            conversation = csv.reader(csvfile, delimiter='\t')
-            next(conversation)
-            for row in conversation:
-                if row:
-                    line_value = row[3]
-                    cur_speaker = row[2]
-                    if cur_speaker == prev_speaker or prev_speaker == "":
-                        if value == "":
-                            value = line_value
-                        else:
-                            value += ' ' + line_value
-                    else: # new speaker
-                        # we add this in
-                        if prev_speaker == "Ellie":
-                            data_set.write(value + '\t')
-                        elif prev_speaker == "Participant":
-                            data_set.write(value + '\n')
-                        # set the value to the new thing
-                        value = line_value
-                    prev_speaker = cur_speaker
-            if prev_speaker == "Ellie":
-                data_set.write(value + '\t')
-            elif prev_speaker == "Participant":
-                data_set.write(value + '\n')
+        df = pd.read_csv('DAIC/' + str(i) + '_TRANSCRIPT.csv', delimiter="\t")
+        convs.append(parse_conversation(df))
     except:
         pass
+convs_full = pd.concat(convs).reset_index(drop=True)
+#print(convs_full)
+
+data_set = open("test.txt", "w")
+ellie = True
+for _, row in convs_full.iterrows():
+    if ellie:
+        data_set.write(row['value'] + '\t')
+        ellie=False
+    else:
+        data_set.write(row['value'] + '\t' + "PLACEHOLDER\n")
+        ellie=True
+
+
+
